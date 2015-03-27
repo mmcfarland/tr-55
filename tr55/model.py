@@ -8,7 +8,6 @@ and variables used in this program are as follows:
  * `evaptrans` maps to ET, the evapotranspiration
  * `inf` is the amount of water that infiltrates into the soil (in inches)
  * `init_abs` is Ia, the initial abstraction, another form of infiltration
-
 """
 
 from datetime import date
@@ -18,7 +17,7 @@ from tr55.tablelookup import lookup_et, lookup_p, lookup_bmp_infiltration, looku
 def runoff_pitt(precip, land_use):
     """
     The Pitt Small Storm Hydrology method.  This comes from Table D in
-    the 2010/12/27 document.
+    the 2010/12/27 document.  The output is a runoff value in inches.
     """
     const1 = +3.638858398e-2
     const2 = -1.243464039e-1
@@ -31,24 +30,25 @@ def runoff_pitt(precip, land_use):
     const9 = -2.289321859e-2
     impervious = (const1 * pow(precip, 3)) + (const2 * pow(precip, 2)) + (const3 * precip) + const4
     urban_grass = (const5 * pow(precip, 4)) + (const6 * pow(precip, 3)) + (const7 * pow(precip, 2)) + (const8 * precip) + const9
-    try:
-        runoff = {
-            'Water':          impervious,
-            'LI_Residential': 0.20 * impervious + 0.80 * urban_grass,
-            'HI_Residential': 0.65 * impervious + 0.35 * urban_grass,
-            'Commercial':     impervious,
-            'Industrial':     impervious,
-            'Transportation': impervious,
-            'UrbanGrass':     urban_grass
-        }[land_use]
-    except:
+    runoff_vals = {
+        'Water':          impervious,
+        'LI_Residential': 0.20 * impervious + 0.80 * urban_grass,
+        'HI_Residential': 0.65 * impervious + 0.35 * urban_grass,
+        'Commercial':     impervious,
+        'Industrial':     impervious,
+        'Transportation': impervious,
+        'UrbanGrass':     urban_grass
+    }
+    if land_use not in runoff_vals:
         raise Exception('Land use %s not a built-type' % land_use)
-    return min(runoff, precip)
+    else:
+        return min(runoff, precip)
 
 
 def runoff_nrcs(precip, soil_type, land_use):
     """
-    The runoff equation from the TR-55 document.
+    The runoff equation from the TR-55 document.  The output is a
+    runoff value in inches.
     """
     curve_number = lookup_cn(soil_type, land_use)
     potential_retention = (1000.0 / curve_number) - 10
@@ -74,23 +74,21 @@ def simulate_tile(parameters, tile_string, pre_columbian=False):
 
     The third argument is a boolean which is true if pre-Columbian
     circumstances are to be simulated and false otherwise.
+
+    The return value is a triple of runoff, evapotranspiration, and
+    infiltration.
     """
     soil_type, land_use = tile_string.split(':')
 
+    pre_columbian_land_uses = set(['Water', 'WoodyWetland', 'HerbaceousWetland'])
     if pre_columbian:
-        if land_use == 'Water':
-            pass
-        elif land_use == 'WoodyWetland':
-            pass
-        elif land_use == 'HerbaceousWetland':
-            pass
-        else:
+        if land_use not in pre_columbian_land_uses:
             land_use = 'MixedForest'
 
-    if type(parameters) == type(date.today()):
+    if type(parameters) is date:
         precip = lookup_p(parameters)  # precipitation
         evaptrans = lookup_et(parameters, land_use)  # evapotranspiration
-    elif type(parameters) == type(tuple()):
+    elif type(parameters) is tuple:
         precip, evaptrans = parameters
     else:
         raise Exception('First argument must be a date or a (P,ET) pair')
@@ -114,15 +112,24 @@ def simulate_tile(parameters, tile_string, pre_columbian=False):
 def tile_by_tile_tr55(parameters, tile_census, pre_columbian=False):
     """
     Simulate each tile and return the overall results.
+
+    The first argument is either a day or a P,ET double (as in simulate_tile).
+
+    The second argument is a dictionary (presumably converted from
+    JSON) that gives the number of each type of tile in the query
+    polygon.
+
+    The output is a runoff, evapotranspiration, infiltration triple
+    which is an average of those produced by all of the tiles.
     """
     if 'error' in tile_census:
-        raise Exception('Tile census contains \'error\' key')
+        raise Exception('Tile census contains "error" key')
     if 'result' not in tile_census:
-        raise Exception('Tile census does not contain \'result\' key')
+        raise Exception('Tile census does not contain "result" key')
     elif 'cell_count' not in tile_census['result']:
-        raise Exception('Tile census does not contain \'result.cell_count\' key')
+        raise Exception('Tile census does not contain "result.cell_count" key')
     elif 'distribution' not in tile_census['result']:
-        raise Exception('Tile census does not contain \'result.distribution\' key')
+        raise Exception('Tile census does not contain "result.distribution" key')
 
     global_count = tile_census['result']['cell_count']
 

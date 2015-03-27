@@ -37,7 +37,7 @@ def lookup_p(simulation_day):
     simulation_day = date(fixed_year, simulation_day.month, simulation_day.day)
     seconds_per_day = 60 * 60 * 24
     days_per_year = SAMPLE_YEAR['daysPerYear']
-    days_from_start = (int)((simulation_day - SAMPLE_YEAR['yearStart']).total_seconds() / seconds_per_day)
+    days_from_start = int((simulation_day - SAMPLE_YEAR['yearStart']).total_seconds() / seconds_per_day)
 
     days = (days_from_start + days_per_year) % days_per_year
     # This is a bit unattractive.  If it turns out to be a performance
