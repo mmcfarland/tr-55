@@ -1,99 +1,132 @@
 """
 TR-55 Model Implementation
+
+A mapping between variable/parameter names found in the TR-55 document
+and variables used in this program are as follows:
+ * `precip` is referred to as P in the report
+ * `runoff` is Q
+ * `evaptrans` maps to ET, the evapotranspiration
+ * `inf` is the amount of water that infiltrates into the soil (in inches)
+ * `init_abs` is Ia, the initial abstraction, another form of infiltration
+
 """
 
 from datetime import date
-from tr55.tablelookup import *
+from tr55.tablelookup import lookup_et, lookup_p, lookup_bmp_infiltration, lookup_cn, is_bmp, is_built_type
 
-def runoffPitt(P, landUse):
+def runoff_pitt(precip, land_use):
     """
-    The Pitt Small Storm Hydrology method.  This comes directly from
-    Table D in the 2010/12/27 document.
+    The Pitt Small Storm Hydrology method.  This comes from Table D in
+    the 2010/12/27 document.
     """
-    c1 = +3.638858398e-2
-    c2 = -1.243464039e-1
-    c3 = +1.295682223e-1
-    c4 = +9.375868043e-1
-    c5 = -2.235170859e-2
-    c6 = +0.170228067e0
-    c7 = -3.971810782e-1
-    c8 = +3.887275538e-1
-    c9 = -2.289321859e-2
-    impervious = (c1 * pow(P, 3)) + (c2 * pow(P, 2)) + (c3 * P) + c4
-    urbanGrass = (c5 * pow(P, 4)) + (c6 * pow(P, 3)) + (c7 * pow(P, 2)) + (c8 * P) + c9
+    const1 = +3.638858398e-2
+    const2 = -1.243464039e-1
+    const3 = +1.295682223e-1
+    const4 = +9.375868043e-1
+    const5 = -2.235170859e-2
+    const6 = +0.170228067e0
+    const7 = -3.971810782e-1
+    const8 = +3.887275538e-1
+    const9 = -2.289321859e-2
+    impervious = (const1 * pow(precip, 3)) + (const2 * pow(precip, 2)) + (const3 * precip) + const4
+    urban_grass = (const5 * pow(precip, 4)) + (const6 * pow(precip, 3)) + (const7 * pow(precip, 2)) + (const8 * precip) + const9
     try:
-        Q = {
+        runoff = {
             'Water':          impervious,
-            'LI_Residential': 0.20 * impervious + 0.80 * urbanGrass,
-            'HI_Residential': 0.65 * impervious + 0.35 * urbanGrass,
+            'LI_Residential': 0.20 * impervious + 0.80 * urban_grass,
+            'HI_Residential': 0.65 * impervious + 0.35 * urban_grass,
             'Commercial':     impervious,
             'Industrial':     impervious,
             'Transportation': impervious,
-            'UrbanGrass':     urbanGrass
-        }[landUse]
+            'UrbanGrass':     urban_grass
+        }[land_use]
     except:
-        raise Exception('Land Use not a Built-Type')
-    return min(Q, P)
+        raise Exception('Land use %s not a built-type' % land_use)
+    return min(runoff, precip)
 
-def runoffNRCS(P, soilType, landUse):
+def runoff_nrcs(precip, soil_type, land_use):
     """
     The runoff equation from the TR-55 document.
     """
-    CN = lookupCN(soilType, landUse)
-    S = (1000.0 / CN) - 10
-    Ia = 0.2 * S
-    PminusIa = P - Ia
-    Q = pow(PminusIa, 2) / (PminusIa + S)
-    return min(Q, P)
+    curve_number = lookup_cn(soil_type, land_use)
+    potential_retention = (1000.0 / curve_number) - 10
+    initial_abs = 0.2 * potential_retention
+    precip_minus_initial_abs = precip - initial_abs
+    runoff = pow(precip_minus_initial_abs, 2) / (precip_minus_initial_abs + potential_retention)
+    return min(runoff, precip)
 
-def simulateTile(parameters, tileString, preColumbian=False):
+def simulate_tile(parameters, tile_string, pre_columbian=False):
     """
     Simulate a tile on a given day using the method given in the
     flowchart 2011_06_16_Stroud_model_diagram_revised.PNG.
+
+    The first argument can be one of two types.  It can either be a
+    date object, in which case the precipitation and
+    evapotranspiration are looked up from the sample year table.
+    Alternatively, those two values can be supplied directly via this
+    argument as a tuple.
+
+    The second argument is a string which contains a soil type and
+    land use separted by a colon.
+
+    The third argument is a boolean which is true if pre-Columbian
+    circumstances are to be simulated and false otherwise.
     """
-    soilType, landUse = tileString.split(':')
-    if preColumbian:
-        if landUse == 'Water':
+    soil_type, land_use = tile_string.split(':')
+
+    if pre_columbian:
+        if land_use == 'Water':
             pass
-        elif landUse == 'WoodyWetland':
+        elif land_use == 'WoodyWetland':
             pass
-        elif landUse == 'HerbaceousWetland':
+        elif land_use == 'HerbaceousWetland':
             pass
         else:
-            landUse = 'MixedForest'
+            land_use = 'MixedForest'
 
     if type(parameters) == type(date.today()):
-        P = lookupP(parameters) # precipitation
-        ET = lookupET(parameters, landUse) # evapotranspiration
+        precip = lookup_p(parameters) # precipitation
+        evaptrans = lookup_et(parameters, land_use) # evapotranspiration
+    elif type(parameters) == type(tuple()):
+        precip, evaptrans = parameters
     else:
-        P, ET = parameters
+        raise Exception('First argument must be a date or a (P,ET) pair')
 
-    if P == 0.0:
+    if precip == 0.0:
         return (0.0, 0.0, 0.0)
 
-    if isBMP(tileString):
-        Inf = lookupBMPInfiltration(soilType, landUse) # infiltration
-        Q = P - (ET + Inf) # runoff
-        return (max(Q, 0.0), ET, Inf) # Q, ET, Inf.
+    if is_bmp(tile_string):
+        inf = lookup_bmp_infiltration(soil_type, land_use) # infiltration
+        runoff = precip - (evaptrans + inf) # runoff
+        return (max(runoff, 0.0), evaptrans, inf) # Q, ET, Inf.
 
-    if isBuiltType(landUse) and P <= 2.0:
-        Q = runoffPitt(P, landUse)
+    if is_built_type(land_use) and precip <= 2.0:
+        runoff = runoff_pitt(precip, land_use)
     else:
-        Q = runoffNRCS(P, soilType, landUse)
-    Inf = P - (ET + Q)
-    return (Q, ET, max(Inf, 0.0))
+        runoff = runoff_nrcs(precip, soil_type, land_use)
+    inf = precip - (evaptrans + runoff)
+    return (runoff, evaptrans, max(inf, 0.0))
 
-def tileByTileTR55(parameters, tileCensus, preColumbian=False):
+def tile_by_tile_tr55(parameters, tile_census, pre_columbian=False):
     """
     Simulate each tile and return the overall results.
     """
-    if ('result' not in tileCensus) or ('error' in tileCensus):
-        raise Exception('Problem')
+    if 'error' in tile_census:
+        raise Exception('Tile census contains \'error\' key')
+    if 'result' not in tile_census:
+        raise Exception('Tile census does not contain \'result\' key')
+    elif 'cell_count' not in tile_census['result']:
+        raise Exception('Tile census does not contain \'result.cell_count\' key')
+    elif 'distribution' not in tile_census['result']:
+        raise Exception('Tile census does not contain \'result.distribution\' key')
 
-    N = tileCensus['result']['cell_count']
+    global_count = tile_census['result']['cell_count']
 
-    def simulate(tileString, n):
-        return ((x * n) / N for x in simulateTile(parameters, tileString, preColumbian))
+    def simulate(tile_string, local_count):
+        """
+        A local helper function which captures various values.
+        """
+        return [(x * local_count) / global_count for x in simulate_tile(parameters, tile_string, pre_columbian)]
 
-    results = (simulate(tile, n) for tile, n in tileCensus['result']['distribution'].items())
+    results = [simulate(tile, n) for tile, n in tile_census['result']['distribution'].items()]
     return reduce(lambda (a, b, c), (x, y, z): (a+x, b+y, c+z), results, (0.0, 0.0, 0.0))

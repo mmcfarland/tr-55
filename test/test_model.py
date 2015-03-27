@@ -3,13 +3,15 @@ Model test set
 """
 
 import unittest
-from tr55.model import *
+from datetime import date
+from tr55.model import runoff_nrcs, tile_by_tile_tr55
 
 # These data are taken directly from Table 2-1 of the revised (1986)
-# TR-55 report.  The Ps array are various precipitation levels, and
-# the CNx array is the calculated runoff for that particular curve
-# number with the given level of precipitation.
-Ps = [1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0]
+# TR-55 report.  The data in the PS array are various precipitation
+# levels, and each respective cnx array is the calculated runoff for
+# that particular curve number with the given level of precipitation
+# corrisponding to that in PS.
+PS = [1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0]
 CN55 = [0.000, 0.000, 0.000, 0.000, 0.000, 0.020, 0.080, 0.190, 0.350, 0.530, 0.740, 0.980, 1.520, 2.120, 2.780, 3.490, 4.230, 5.000, 5.790, 6.610, 7.440, 8.290]
 CN70 = [0.000, 0.030, 0.060, 0.110, 0.170, 0.240, 0.460, 0.710, 1.010, 1.330, 1.670, 2.040, 2.810, 3.620, 4.460, 5.330, 6.220, 7.130, 8.050, 8.980, 9.910, 10.85]
 CN80 = [0.080, 0.150, 0.240, 0.340, 0.440, 0.560, 0.890, 1.250, 1.640, 2.040, 2.460, 2.890, 3.780, 4.690, 5.630, 6.570, 7.520, 8.480, 9.450, 10.42, 11.39, 12.37]
@@ -19,38 +21,38 @@ class TestModel(unittest.TestCase):
     """
     Model test set
     """
-    def test_NRCS(self):
+    def test_nrcs(self):
         """
         Test the implementation of the runoff equation.
         """
         # This pair has CN=55 in Table C of the 2010/12/27 memo
-        Qs = [round(runoffNRCS(P, 'soilB', 'DeciduousForest'), 2) for P in Ps]
-        self.assertEqual(Qs[3:], CN55[3:]) # Low curve number and low P cause too-high runoff
+        runoffs = [round(runoff_nrcs(precip, 'soilB', 'DeciduousForest'), 2) for precip in PS]
+        self.assertEqual(runoffs[3:], CN55[3:]) # Low curve number and low P cause too-high runoff
 
         # This pair has CN=70
-        Qs = [round(runoffNRCS(P, 'soilC', 'DeciduousForest'), 2) for P in Ps]
-        self.assertEqual(Qs, CN70)
+        runoffs = [round(runoff_nrcs(precip, 'soilC', 'DeciduousForest'), 2) for precip in PS]
+        self.assertEqual(runoffs, CN70)
 
         # This pair has CN=80
-        Qs = [round(runoffNRCS(P, 'soilD', 'Pasture'), 2) for P in Ps]
-        self.assertEqual(Qs, CN80)
+        runoffs = [round(runoff_nrcs(precip, 'soilD', 'Pasture'), 2) for precip in PS]
+        self.assertEqual(runoffs, CN80)
 
         # This pair has CN=90
-        Qs = [round(runoffNRCS(P, 'soilC', 'HI_Residential'), 2) for P in Ps]
-        self.assertEqual(Qs, CN90)
+        runoffs = [round(runoff_nrcs(precip, 'soilC', 'HI_Residential'), 2) for precip in PS]
+        self.assertEqual(runoffs, CN90)
 
-    def test_tileByTileTR55(self):
+    def test_tile_by_tile_tr55(self):
         """
         Test the tile-by-tile simulation.
         """
         # Test invalid responses
-        nonResponse = {
+        non_response = {
             "error": {
                 "message": "boom!",
                 "trace": "blah at line 2"
             }
         }
-        self.assertRaises(Exception, tileByTileTR55, (date.today(), nonResponse))
+        self.assertRaises(Exception, tile_by_tile_tr55, (date.today(), non_response))
 
         # Test valid responses
         response1 = {
@@ -71,8 +73,8 @@ class TestModel(unittest.TestCase):
                 }
             }
         }
-        self.assertEqual(tileByTileTR55(date.today(), response1),
-                         tileByTileTR55(date.today(), response2))
+        self.assertEqual(tile_by_tile_tr55(date.today(), response1),
+                         tile_by_tile_tr55(date.today(), response2))
 
         response3 = {
             "result": {
@@ -90,8 +92,8 @@ class TestModel(unittest.TestCase):
                 }
             }
         }
-        self.assertEqual(tileByTileTR55(date.today(), response3, True),
-                         tileByTileTR55(date.today(), response4, True))
+        self.assertEqual(tile_by_tile_tr55(date.today(), response3, True),
+                         tile_by_tile_tr55(date.today(), response4, True))
 
 if __name__ == "__main__":
     unittest.main()

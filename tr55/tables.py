@@ -10,7 +10,7 @@ from datetime import date
 # value associated with the 'percipitation' key is a tuple of a number
 # of consecutive days, and the amount of percipitation during that run
 # of days.
-SampleYear = {'yearStart': date(1, 10, 15), # Sample year starts on 10/15
+SAMPLE_YEAR = {'yearStart': date(1, 10, 15), # Sample year starts on 10/15
               'daysPerYear': 365,           # The number of days in the sample year
 
               'growingStart': date(1, 4, 15), # Growing season starts on 4/15
@@ -113,7 +113,7 @@ SampleYear = {'yearStart': date(1, 10, 15), # Sample year starts on 10/15
                   (122, 0.00)]
 }
 
-TableA = {
+TABLE_A = {
     'Water':             0.0,
     'LI_Residential':    0.42,
     'HI_Residential':    0.18,
@@ -140,7 +140,7 @@ TableA = {
 }
 
 # Inches of retention for different BMPs on different soil types
-TableB = {
+TABLE_B = {
     'soilA': {
         'GreenRoof':          1.6,
         'PorousPaving':       7.73,
@@ -165,12 +165,12 @@ TableB = {
 }
 
 # The set of best management practices that we know about
-BMPs = set(TableB['soilA'].keys())
+BMPS = set(TABLE_B['soilA'].keys())
 
 # The set of "built" land uses
-BuiltTypes = set(['LI_Residential', 'HI_Residential', 'Commercial', 'Industrial', 'Transportation', 'UrbanGrass'])
+BUILT_TYPES = set(['LI_Residential', 'HI_Residential', 'Commercial', 'Industrial', 'Transportation', 'UrbanGrass'])
 
-TableC = {
+TABLE_C = {
     'soilA': {
         'Water':             100,
         'LI_Residential':    51,
