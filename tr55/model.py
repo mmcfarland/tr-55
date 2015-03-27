@@ -14,6 +14,7 @@ and variables used in this program are as follows:
 from datetime import date
 from tr55.tablelookup import lookup_et, lookup_p, lookup_bmp_infiltration, lookup_cn, is_bmp, is_built_type
 
+
 def runoff_pitt(precip, land_use):
     """
     The Pitt Small Storm Hydrology method.  This comes from Table D in
@@ -44,6 +45,7 @@ def runoff_pitt(precip, land_use):
         raise Exception('Land use %s not a built-type' % land_use)
     return min(runoff, precip)
 
+
 def runoff_nrcs(precip, soil_type, land_use):
     """
     The runoff equation from the TR-55 document.
@@ -54,6 +56,7 @@ def runoff_nrcs(precip, soil_type, land_use):
     precip_minus_initial_abs = precip - initial_abs
     runoff = pow(precip_minus_initial_abs, 2) / (precip_minus_initial_abs + potential_retention)
     return min(runoff, precip)
+
 
 def simulate_tile(parameters, tile_string, pre_columbian=False):
     """
@@ -85,8 +88,8 @@ def simulate_tile(parameters, tile_string, pre_columbian=False):
             land_use = 'MixedForest'
 
     if type(parameters) == type(date.today()):
-        precip = lookup_p(parameters) # precipitation
-        evaptrans = lookup_et(parameters, land_use) # evapotranspiration
+        precip = lookup_p(parameters)  # precipitation
+        evaptrans = lookup_et(parameters, land_use)  # evapotranspiration
     elif type(parameters) == type(tuple()):
         precip, evaptrans = parameters
     else:
@@ -96,9 +99,9 @@ def simulate_tile(parameters, tile_string, pre_columbian=False):
         return (0.0, 0.0, 0.0)
 
     if is_bmp(tile_string):
-        inf = lookup_bmp_infiltration(soil_type, land_use) # infiltration
-        runoff = precip - (evaptrans + inf) # runoff
-        return (max(runoff, 0.0), evaptrans, inf) # Q, ET, Inf.
+        inf = lookup_bmp_infiltration(soil_type, land_use)  # infiltration
+        runoff = precip - (evaptrans + inf)  # runoff
+        return (max(runoff, 0.0), evaptrans, inf)  # Q, ET, Inf.
 
     if is_built_type(land_use) and precip <= 2.0:
         runoff = runoff_pitt(precip, land_use)
@@ -106,6 +109,7 @@ def simulate_tile(parameters, tile_string, pre_columbian=False):
         runoff = runoff_nrcs(precip, soil_type, land_use)
     inf = precip - (evaptrans + runoff)
     return (runoff, evaptrans, max(inf, 0.0))
+
 
 def tile_by_tile_tr55(parameters, tile_census, pre_columbian=False):
     """

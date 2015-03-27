@@ -17,6 +17,7 @@ CN70 = [0.000, 0.030, 0.060, 0.110, 0.170, 0.240, 0.460, 0.710, 1.010, 1.330, 1.
 CN80 = [0.080, 0.150, 0.240, 0.340, 0.440, 0.560, 0.890, 1.250, 1.640, 2.040, 2.460, 2.890, 3.780, 4.690, 5.630, 6.570, 7.520, 8.480, 9.450, 10.42, 11.39, 12.37]
 CN90 = [0.320, 0.460, 0.610, 0.760, 0.930, 1.090, 1.530, 1.980, 2.450, 2.920, 3.400, 3.880, 4.850, 5.820, 6.810, 7.790, 8.780, 9.770, 10.76, 11.76, 12.75, 13.74]
 
+
 class TestModel(unittest.TestCase):
     """
     Model test set
@@ -27,7 +28,7 @@ class TestModel(unittest.TestCase):
         """
         # This pair has CN=55 in Table C of the 2010/12/27 memo
         runoffs = [round(runoff_nrcs(precip, 'soilB', 'DeciduousForest'), 2) for precip in PS]
-        self.assertEqual(runoffs[3:], CN55[3:]) # Low curve number and low P cause too-high runoff
+        self.assertEqual(runoffs[3:], CN55[3:])  # Low curve number and low P cause too-high runoff
 
         # This pair has CN=70
         runoffs = [round(runoff_nrcs(precip, 'soilC', 'DeciduousForest'), 2) for precip in PS]

@@ -7,6 +7,7 @@ from datetime import date
 from tr55.tables import TABLE_A, TABLE_B, TABLE_C
 from tr55.tablelookup import lookup_et, lookup_p, lookup_bmp_infiltration, lookup_cn
 
+
 class TestTablelookups(unittest.TestCase):
     """
     Table Lookup test set

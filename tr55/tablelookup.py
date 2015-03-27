@@ -5,6 +5,7 @@ Various routines to do table lookups.
 from datetime import date
 from tr55.tables import SAMPLE_YEAR, TABLE_A, TABLE_B, TABLE_C, BMPS, BUILT_TYPES
 
+
 def lookup_et(simulation_day, land_use):
     """
     Lookup/compute evapotranspiration from the tables.
@@ -27,6 +28,7 @@ def lookup_et(simulation_day, land_use):
     # Report $ET$, the evapotranspiration
     return et_max * landuse_coefficient
 
+
 def lookup_p(simulation_day):
     """
     Lookup percipitation from the SAMPLE_YEAR table.
@@ -47,6 +49,7 @@ def lookup_p(simulation_day):
         days -= consecutive_days
     raise Exception('No percipitation data for %s' % simulation_day)
 
+
 def lookup_bmp_infiltration(soil_type, bmp):
     """
     Lookup the amount of infiltration causes by a particular BMP.
@@ -57,6 +60,7 @@ def lookup_bmp_infiltration(soil_type, bmp):
         raise Exception('BMP %s incompatible with soil type %s' % (bmp, soil_type))
     else:
         return TABLE_B[soil_type][bmp]
+
 
 def lookup_cn(soil_type, land_use):
     """
@@ -69,11 +73,13 @@ def lookup_cn(soil_type, land_use):
     else:
         return TABLE_C[soil_type][land_use]
 
+
 def is_bmp(land_use):
     """
     Test to see if the land use is a BMP.
     """
     return land_use in BMPS
+
 
 def is_built_type(land_use):
     """
