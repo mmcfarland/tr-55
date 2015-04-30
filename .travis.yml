@@ -1,0 +1,18 @@
+language: python
+
+python:
+- '2.7'
+
+install: pip install -r requirements.txt --use-mirrors
+
+script: nosetests
+
+deploy:
+  provider: pypi
+  user: azavea
+  password:
+    secure: e6Y3K85nCj5Wh8H79fM3PavfPsCP0jzvD+Zz6CYd/m0UW2D0u0A+P6R6+7HSPBfB0Sj83kslSQwTJ0lOlVWn3y6oVF+UuyGTzfgKPueccO0hfdT98z3PEqNUFs+B1o8PeLa8V13ThNqe4vStcb3WZY+nTv/qdUK4qfbzUmigVI8=
+  on:
+    tags: true
+    repo: WikiWatershed/tr-55
+    branch: feature/travis
