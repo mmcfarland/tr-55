@@ -594,8 +594,15 @@ def simulate(precip, tile_string):
     ki = lookup_ki(land_use)
     return simulate_tile((precip, 0.209 * ki), tile_string)
 
+
+def python2_round(x, d=0):
+    p = 10 ** d
+    return float(floor((x * p) + copysign(0.5, x)))/p
+
+
 def average(l):
-    return reduce(lambda x, y: x + y, l) / len(l)
+    return sum(l) / len(l)
+
 
 class TestModel(unittest.TestCase):
     """
@@ -606,22 +613,23 @@ class TestModel(unittest.TestCase):
         Test the implementation of the runoff equation.
         """
         # This pair has CN=55 in Table C of the 2010/12/27 memo
-        runoffs = [round(runoff_nrcs(precip, 0.0, 'b', 'deciduous_forest'), 2)
+        runoffs = [python2_round(runoff_nrcs(precip, 0.0, 'b', 'deciduous_forest'), 2)
                    for precip in PS]
-        self.assertEqual(runoffs[4:], CN55[4:])  # Low curve number and low P cause too-high runoff
+        # Low curve number and low P cause too-high runoff
+        self.assertEqual(runoffs[4:], CN55[4:])
 
         # This pair has CN=70
-        runoffs = [round(runoff_nrcs(precip, 0.0, 'c', 'deciduous_forest'), 2)
+        runoffs = [python2_round(runoff_nrcs(precip, 0.0, 'c', 'deciduous_forest'), 2)
                    for precip in PS]
         self.assertEqual(runoffs[1:], CN70[1:])
 
         # This pair has CN=80
-        runoffs = [round(runoff_nrcs(precip, 0.0, 'd', 'pasture'), 2)
+        runoffs = [python2_round(runoff_nrcs(precip, 0.0, 'd', 'pasture'), 2)
                    for precip in PS]
         self.assertEqual(runoffs, CN80)
 
         # This pair has CN=90
-        runoffs = [round(runoff_nrcs(precip, 0.0, 'c', 'hi_residential'), 2)
+        runoffs = [python2_round(runoff_nrcs(precip, 0.0, 'c', 'hi_residential'), 2)
                    for precip in PS]
         self.assertEqual(runoffs, CN90)
 
@@ -635,7 +643,7 @@ class TestModel(unittest.TestCase):
         def similar(incoming, expected):
             precip, tile_string = incoming
             results = simulate(precip, tile_string)
-            me = average(map(lambda x, y: abs(x - y) / precip, results, expected))
+            me = average(list(map(lambda x, y: abs(x - y) / precip, results, expected)))
             # Precipitation levels <= 2 inches are known to be
             # problematic.  It is unclear why the 'rock' type is
             # giving trouble on soil types C and D.
@@ -656,7 +664,7 @@ class TestModel(unittest.TestCase):
         expected = [OUTPUT[i][0] / INPUT[i][0]
                     for i in range(len(INPUT))
                     if INPUT[i][0] > 2 and INPUT[i][1] != 'c:rock' and INPUT[i][1] != 'd:rock']
-        rmse = sqrt(average(map(lambda x, y: pow((x - y), 2), results, expected)))
+        rmse = sqrt(average(list(map(lambda x, y: pow((x - y), 2), results, expected))))
         self.assertTrue(rmse < 0.13)
 
     def test_simulate_all_tiles(self):
