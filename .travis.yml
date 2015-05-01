@@ -11,8 +11,8 @@ deploy:
   provider: pypi
   user: azavea
   password:
-    secure: e6Y3K85nCj5Wh8H79fM3PavfPsCP0jzvD+Zz6CYd/m0UW2D0u0A+P6R6+7HSPBfB0Sj83kslSQwTJ0lOlVWn3y6oVF+UuyGTzfgKPueccO0hfdT98z3PEqNUFs+B1o8PeLa8V13ThNqe4vStcb3WZY+nTv/qdUK4qfbzUmigVI8=
+      secure: S4FQSkKrvNl+D+w/2hMBKf2DWmk0naC44/YMmDODsmJ0Te9iP7zs2pS9RQ9rWA9mcRMSEK3yTLcPvRTA0MBYIKcDmhCjKRNMSy/vEVtbP6+/WH+gFZvO/yq1wz/illmY6PQeN90enPOiJFff2Q5BDRRNk9zZ5yfML8bLvkJZn6A=
   on:
     tags: true
-    repo: WikiWatershed/tr-55
-    branch: feature/travis
+    repo: mmcfarland/tr-55
+    branch: feature/travis-2.7
