@@ -102,15 +102,16 @@ def calculate_overall_reduction(runoff, infiltration, overall_mods):
 
        returns a modified (runoff, infiltration) tuple
     """
-
+    print('om1', overall_mods)
     # Only accept modifications for certain area-based conservation practices
     conservation_mods = [mod for mod in overall_mods
                          if is_area_bmp(mod['type'])]
 
+    print('cm', conservation_mods)
     # Sum up the total reduction (factor * area) for each bmp type
     reduced = sum([lookup_infiltration_factor(mod['type']) * mod['area']
                   for mod in conservation_mods])
-
+    print('reduced sum', reduced)
     # Apply the reduction to the runoff and add the same to the infiltration
     return (runoff - reduced, infiltration + reduced)
 

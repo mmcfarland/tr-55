@@ -33,10 +33,10 @@ LAND_USE_VALUES = {
     # Infiltration for Green Roof, Porous Paving, Rain Garden and Trench is
     # calculated by an infiltration factor based on the total area of
     # implementation in an area, not on a cell/soil pair basis
-    'green_roof':           {'ki': 0.4, 'infiltration_factor': 0.25},
-    'porous_paving':        {'ki': 0.0, 'infiltration_factor': 0.25},
-    'rain_garden':          {'ki': 0.08, 'infiltration_factor': 0.25},
-    'infiltration_trench':  {'ki': 0.0, 'infiltration_factor': 0.25},
+    'green_roof':           {'ki': 0.4, 'infiltration_factor': 0.000001},
+    'porous_paving':        {'ki': 0.0, 'infiltration_factor': 0.000001},
+    'rain_garden':          {'ki': 0.08, 'infiltration_factor': 0.000001},
+    'infiltration_trench':  {'ki': 0.0, 'infiltration_factor': 0.000001},
     'cluster_housing':      {'ki': 0.42},
     'no_till':              {'ki': 0.9, 'cn': {'a': 57, 'b': 73, 'c': 82, 'd': 86}}  # noqa
 }
