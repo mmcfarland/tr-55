@@ -12,8 +12,9 @@ import unittest
 from tr55.model import runoff_nrcs, \
     simulate_cell_day, simulate_water_quality, \
     create_unmodified_census, create_modified_census, \
-    simulate_day
+    simulate_day, calculate_overall_reduction
 from tr55.tablelookup import lookup_ki
+from tr55.tables import LAND_USE_VALUES
 
 # These data are taken directly from Table 2-1 of the revised (1986)
 # TR-55 report.  The data in the PS array are various precipitation
@@ -251,175 +252,175 @@ CENSUS_2 = {
 }
 
 DAY_OUTPUT_2 = {
-    "modified": {
-        "bod": 1.6502192351913143,
-        "cell_count": 4,
-        "distribution": {
-            "a:deciduous_forest": {
-                "bod": 0,
-                "cell_count": 1,
-                "distribution": {
-                    "a:deciduous_forest": {
-                        "bod": 0,
-                        "cell_count": 1,
-                        "et": 0.14489999999999997,
-                        "inf": 1.8551,
-                        "runoff": 0,
-                        "tn": 0,
-                        "tp": 0,
-                        "tss": 0
-                    }
-                },
-                "et": 0.14489999999999997,
-                "inf": 1.8551,
-                "runoff": 0,
-                "tn": 0,
-                "tp": 0,
-                "tss": 0
-            },
-            "b:pasture": {
-                "bod": 0.1793851691515932,
-                "cell_count": 1,
-                "distribution": {
-                    "b:pasture": {
-                        "cell_count": 0,
-                        "et": 0,
-                        "inf": 0,
-                        "runoff": 0
-                    },
-                    "b:pasture:no_till": {
-                        "bod": 0.1793851691515932,
-                        "cell_count": 1,
-                        "et": 0.1863,
-                        "inf": 1.4934093771285855,
-                        "runoff": 0.32029062287141463,
-                        "tn": 0.004125858890486643,
-                        "tp": 0.0005381555074547796,
-                        "tss": 0.0896925845757966
-                    }
-                },
-                "et": 0.1863,
-                "inf": 1.4934093771285855,
-                "runoff": 0.32029062287141463,
-                "tn": 0.004125858890486643,
-                "tp": 0.0005381555074547796,
-                "tss": 0.0896925845757966
-            },
-            "c:developed_high": {
-                "bod": 1.0292097358545353,
-                "cell_count": 1,
-                "distribution": {
-                    "c:developed_high": {
-                        "cell_count": 0,
-                        "et": 0,
-                        "inf": 0,
-                        "runoff": 0
-                    },
-                    "c:developed_high:rain_garden": {
-                        "bod": 1.0292097358545353,
-                        "cell_count": 1,
-                        "et": 0.01656,
-                        "inf": 0.5014683687832001,
-                        "runoff": 1.4819716312167999,
-                        "tn": 0.007553071448609896,
-                        "tp": 0.001195211306153654,
-                        "tss": 0.20990898564323546
-                    }
-                },
-                "et": 0.01656,
-                "inf": 0.5014683687832001,
-                "runoff": 1.4819716312167999,
-                "tn": 0.007553071448609896,
-                "tp": 0.001195211306153654,
-                "tss": 0.20990898564323546
-            },
-            "d:developed_med": {
-                "bod": 0.441624330185186,
-                "cell_count": 1,
-                "distribution": {
-                    "d:developed_med": {
-                        "cell_count": 0,
-                        "et": 0,
-                        "inf": 0,
-                        "runoff": 0
-                    },
-                    "d:developed_med:cluster_housing": {
-                        "bod": 0.441624330185186,
-                        "cell_count": 1,
-                        "et": 0.08693999999999999,
-                        "inf": 1.2448258383119999,
-                        "runoff": 0.6682341616880002,
-                        "tn": 0.002563666662515698,
-                        "tp": 0.000430396592977088,
-                        "tss": 0.052770364878060354
-                    }
-                },
-                "et": 0.08693999999999999,
-                "inf": 1.2448258383119999,
-                "runoff": 0.6682341616880002,
-                "tn": 0.002563666662515698,
-                "tp": 0.000430396592977088,
-                "tss": 0.052770364878060354
-            }
-        },
-        "et": 0.108675,
-        "inf": 1.2737008960559462,
-        "runoff": 0.6176241039440536,
-        "tn": 0.014242597001612237,
-        "tp": 0.0021637634065855213,
-        "tss": 0.3523719350970924
-    },
     "unmodified": {
-        "bod": 2.17533173775233,
+        "inf": 1.1166794893660754,
         "cell_count": 4,
+        "tp": 0.002427930251922799,
+        "tn": 0.015179909035727399,
+        "runoff": 0.8036255106339244,
+        "et": 0.07969499999999999,
         "distribution": {
             "a:deciduous_forest": {
-                "bod": 0,
                 "cell_count": 1,
+                "tp": 0,
+                "tn": 0,
+                "runoff": 0,
                 "et": 0.14489999999999997,
                 "inf": 1.8551,
-                "runoff": 0,
-                "tn": 0,
-                "tp": 0,
+                "bod": 0,
                 "tss": 0
             },
             "b:pasture": {
-                "bod": 0.04095699629825491,
                 "cell_count": 1,
+                "tp": 0.00012287098889476473,
+                "tn": 0.0009420109148598631,
+                "runoff": 0.0731283523456977,
                 "et": 0.12419999999999999,
                 "inf": 1.8026716476543023,
-                "runoff": 0.0731283523456977,
-                "tn": 0.0009420109148598631,
-                "tp": 0.00012287098889476473,
+                "bod": 0.04095699629825491,
                 "tss": 0.020478498149127455
             },
             "c:developed_high": {
-                "bod": 1.204774276534075,
                 "cell_count": 1,
+                "tp": 0.0013990927082331193,
+                "tn": 0.008841488642306519,
+                "runoff": 1.734769151169,
                 "et": 0.012419999999999999,
                 "inf": 0.2528108488309999,
-                "runoff": 1.734769151169,
-                "tn": 0.008841488642306519,
-                "tp": 0.0013990927082331193,
+                "bod": 1.204774276534075,
                 "tss": 0.2457156568834416
             },
             "d:developed_med": {
-                "bod": 0.9296004649199999,
                 "cell_count": 1,
+                "tp": 0.0009059665547949152,
+                "tn": 0.005396409478561016,
+                "runoff": 1.406604539021,
                 "et": 0.037259999999999995,
                 "inf": 0.5561354609789999,
-                "runoff": 1.406604539021,
-                "tn": 0.005396409478561016,
-                "tp": 0.0009059665547949152,
+                "bod": 0.9296004649199999,
                 "tss": 0.1110793775878983
             }
         },
-        "et": 0.07969499999999999,
-        "inf": 1.1166794893660754,
-        "runoff": 0.8036255106339244,
-        "tn": 0.015179909035727399,
-        "tp": 0.002427930251922799,
+        "bod": 2.17533173775233,
         "tss": 0.37727353262046737
+    },
+    "modified": {
+        "inf": 1.2105015160678962,
+        "cell_count": 4,
+        "tp": 0.002367644808664987,
+        "tn": 0.015531014195308859,
+        "runoff": 0.6808234839321038,
+        "et": 0.108675,
+        "distribution": {
+            "a:deciduous_forest": {
+                "inf": 1.8551,
+                "cell_count": 1,
+                "tp": 0,
+                "tn": 0,
+                "runoff": 0,
+                "et": 0.14489999999999997,
+                "distribution": {
+                    "a:deciduous_forest": {
+                        "cell_count": 1,
+                        "tp": 0,
+                        "tn": 0,
+                        "runoff": 0,
+                        "et": 0.14489999999999997,
+                        "inf": 1.8551,
+                        "bod": 0,
+                        "tss": 0
+                    }
+                },
+                "bod": 0,
+                "tss": 0
+            },
+            "b:pasture": {
+                "inf": 1.4934093771285855,
+                "cell_count": 1,
+                "tp": 0.0005381555074547796,
+                "tn": 0.004125858890486643,
+                "runoff": 0.32029062287141463,
+                "et": 0.1863,
+                "distribution": {
+                    "b:pasture:no_till": {
+                        "cell_count": 1,
+                        "tp": 0.0005381555074547796,
+                        "tn": 0.004125858890486643,
+                        "runoff": 0.32029062287141463,
+                        "et": 0.1863,
+                        "inf": 1.4934093771285855,
+                        "bod": 0.1793851691515932,
+                        "tss": 0.0896925845757966
+                    },
+                    "b:pasture": {
+                        "cell_count": 0,
+                        "runoff": 0,
+                        "et": 0,
+                        "inf": 0
+                    }
+                },
+                "bod": 0.1793851691515932,
+                "tss": 0.0896925845757966
+            },
+            "c:developed_high": {
+                "inf": 0.2486708488310001,
+                "cell_count": 1,
+                "tp": 0.0013990927082331193,
+                "tn": 0.008841488642306519,
+                "runoff": 1.734769151169,
+                "et": 0.01656,
+                "distribution": {
+                    "c:developed_high:rain_garden": {
+                        "cell_count": 1,
+                        "tp": 0.0013990927082331193,
+                        "tn": 0.008841488642306519,
+                        "runoff": 1.734769151169,
+                        "et": 0.01656,
+                        "inf": 0.2486708488310001,
+                        "bod": 1.204774276534075,
+                        "tss": 0.2457156568834416
+                    },
+                    "c:developed_high": {
+                        "cell_count": 0,
+                        "runoff": 0,
+                        "et": 0,
+                        "inf": 0
+                    }
+                },
+                "bod": 1.204774276534075,
+                "tss": 0.2457156568834416
+            },
+            "d:developed_med": {
+                "inf": 1.2448258383119999,
+                "cell_count": 1,
+                "tp": 0.000430396592977088,
+                "tn": 0.002563666662515698,
+                "runoff": 0.6682341616880002,
+                "et": 0.08693999999999999,
+                "distribution": {
+                    "d:developed_med": {
+                        "cell_count": 0,
+                        "runoff": 0,
+                        "et": 0,
+                        "inf": 0
+                    },
+                    "d:developed_med:cluster_housing": {
+                        "cell_count": 1,
+                        "tp": 0.000430396592977088,
+                        "tn": 0.002563666662515698,
+                        "runoff": 0.6682341616880002,
+                        "et": 0.08693999999999999,
+                        "inf": 1.2448258383119999,
+                        "bod": 0.441624330185186,
+                        "tss": 0.052770364878060354
+                    }
+                },
+                "bod": 0.441624330185186,
+                "tss": 0.052770364878060354
+            }
+        },
+        "bod": 1.8257837758708542,
+        "tss": 0.38817860633729856
     }
 }
 
@@ -776,6 +777,34 @@ class TestModel(unittest.TestCase):
         expected = DAY_OUTPUT_2
         self.assertEqual(actual, expected)
 
+    def test_day_with_overall_bmp(self):
+        """
+        Test the simulate_day function with a BMP that is taken off
+        from the total runoff value instead of on a soil::land pairing
+        """
+        test_factor = 0.0003
+        test_area = 2000
+
+        pp_orig = LAND_USE_VALUES['porous_paving']['infiltration_factor']
+        LAND_USE_VALUES['porous_paving']['infiltration_factor'] = test_factor
+
+        precip = 2
+        bmps = [{'type': 'porous_paving', 'area': test_area}]
+
+        reduced = test_area * test_factor
+
+        with_bmp = simulate_day(CENSUS_1, precip, bmps)
+        without_bmp = simulate_day(CENSUS_1, precip)
+
+        unmod_runoff = without_bmp['modified']['runoff']
+        mod_runoff = with_bmp['modified']['runoff']
+
+        self.assertEqual(unmod_runoff - reduced, mod_runoff,
+                         "Runoff was not reduced by the correct factor")
+
+        # Reset to original value for other tests
+        LAND_USE_VALUES['porous_paving']['infiltration_factor'] = pp_orig
+
     def test_day_with_invalid_census(self):
         """
         Test the simulate_day function with a census
@@ -855,57 +884,51 @@ class TestModel(unittest.TestCase):
         total = runoff + et + inf
         self.assertAlmostEqual(total, precip)
 
-    def test_bmps_on_d(self):
+    def test_bmp_doesnt_modify_census_day(self):
+        """Ensure that Rain Garden bmp does not alter the results
+           of a simulation
         """
-        Make sure that BMPS all work on soil type D.
-        """
-        census = {
-            "cell_count": 2,
-            "distribution": {
-                "c:developed_med": {"cell_count": 1},
-                "d:developed_med": {"cell_count": 1}
-            },
-            "modifications": [
-                {
-                    "change": "::porous_paving",
-                    "cell_count": 1,
-                    "distribution": {
-                        "c:developed_med": {"cell_count": 1}
-                    }
-                },
-                {
-                    "change": "::porous_paving",
-                    "cell_count": 1,
-                    "distribution": {
-                        "d:developed_med": {"cell_count": 1}
-                    }
-                }
-            ]
-        }
 
-        # Porous Paving
-        precip = 3.3
-        result = simulate_day(census, precip)
-        c_inf = result['modified']['distribution']['c:developed_med']['inf']
-        d_inf = result['modified']['distribution']['d:developed_med']['inf']
-        self.assertAlmostEqual(c_inf / 3, d_inf)
+        precip = 1
+        et = 0.5
+        cell_count = 1
 
-        # Rain Garden
-        census['modifications'][0]['change'] = '::rain_garden'
-        census['modifications'][1]['change'] = '::rain_garden'
-        result = simulate_day(census, precip)
-        c_inf = result['modified']['distribution']['c:developed_med']['inf']
-        d_inf = result['modified']['distribution']['d:developed_med']['inf']
-        self.assertLess(d_inf, c_inf)
-        self.assertGreater(d_inf / c_inf, 0.5)
+        cell_no_bmp = 'a:barren_land:'
+        cell_bmp = 'a:barren_land:rain_garden'
 
-        # Infiltration Trench
-        census['modifications'][0]['change'] = '::infiltration_trench'
-        census['modifications'][1]['change'] = '::infiltration_trench'
-        result = simulate_day(census, precip)
-        c_inf = result['modified']['distribution']['c:developed_med']['inf']
-        d_inf = result['modified']['distribution']['d:developed_med']['inf']
-        self.assertAlmostEqual(c_inf / 3, d_inf)
+        no_bmp = simulate_cell_day(precip, et, cell_no_bmp, cell_count)
+        with_bmp = simulate_cell_day(precip, et, cell_bmp, cell_count)
+
+        self.assertDictEqual(no_bmp, with_bmp)
+
+    def test_overall_mod_reduction(self):
+        """Ensure that 'off the top' bmp reductions are calculated correctly"""
+
+        # Mock the factors for this test
+        gr_orig = LAND_USE_VALUES['green_roof']['infiltration_factor']
+        pp_orig = LAND_USE_VALUES['porous_paving']['infiltration_factor']
+
+        LAND_USE_VALUES['green_roof']['infiltration_factor'] = 0.02
+        LAND_USE_VALUES['porous_paving']['infiltration_factor'] = 0.03
+
+        bmps = [
+            {'type': 'green_roof', 'area': 2000},
+            {'type': 'porous_paving', 'area': 5000}
+        ]
+
+        r = 1000
+        inf = 100
+        result = calculate_overall_reduction(r, inf, bmps)
+
+        reduced = (0.02 * 2000) + (0.03 * 5000)
+
+        # Reset I.F
+        LAND_USE_VALUES['green_roof']['infiltration_factor'] = gr_orig
+        LAND_USE_VALUES['porous_paving']['infiltration_factor'] = pp_orig
+
+        self.assertEqual(result, (r - reduced, inf + reduced),
+                         "Runoff & Infilatration were not modified correctly")
+
 
 if __name__ == "__main__":
     unittest.main()

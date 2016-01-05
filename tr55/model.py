@@ -17,8 +17,9 @@ and variables used in this program are as follows:
 
 import copy
 
-from tr55.tablelookup import lookup_cn, lookup_bmp_infiltration, \
-    lookup_ki, is_bmp, is_built_type, make_precolumbian, get_pollutants
+from tr55.tablelookup import lookup_cn, \
+    lookup_ki, is_built_type, is_area_bmp, make_precolumbian, \
+    get_pollutants, lookup_infiltration_factor
 from tr55.water_quality import get_volume_of_runoff, get_pollutant_load
 from tr55.operations import dict_plus
 
@@ -89,7 +90,32 @@ def runoff_nrcs(precip, evaptrans, soil_type, land_use):
     return min(runoff, precip - evaptrans)
 
 
-def simulate_cell_day(precip, evaptrans, cell, cell_count):
+def calculate_overall_reduction(runoff, infiltration, overall_mods):
+    """Reduce runoff and increate infiltration based on the area of
+       overall modifications included in the area of interest times a
+       corresponding infiltration factor
+
+       `runoff`: the original amount of runoff from the census
+       `infiltration`: the origin amount of infiltrant
+       `overall_mods`: a dict with bmp type and area keys to calculate
+        the reduction factor for each bmp
+
+       returns a modified (runoff, infiltration) tuple
+    """
+
+    # Only accept modifications for certain area-based conservation practices
+    conservation_mods = [mod for mod in overall_mods
+                         if is_area_bmp(mod['type'])]
+
+    # Sum up the total reduction (factor * area) for each bmp type
+    reduced = sum([lookup_infiltration_factor(mod['type']) * mod['area']
+                  for mod in conservation_mods])
+
+    # Apply the reduction to the runoff and add the same to the infiltration
+    return (runoff - reduced, infiltration + reduced)
+
+
+def simulate_cell_day(precip, evaptrans, cell, cell_count, overall_mods=None):
     """
     Simulate a bunch of cells of the same type during a one-day event.
 
@@ -138,45 +164,13 @@ def simulate_cell_day(precip, evaptrans, cell, cell_count):
             'inf-vol': 0.0,
         }
 
-    # Deal with the Best Management Practices (BMPs).  For most BMPs,
-    # the infiltration is read from the table and the runoff is what
-    # is left over after infiltration and evapotranspiration.  Rain
-    # gardens are treated differently.
-    if bmp and is_bmp(bmp) and bmp != 'rain_garden':
-        inf = lookup_bmp_infiltration(soil_type, bmp)  # infiltration
-        runoff = max(0.0, precip - (evaptrans + inf))  # runoff
-        (runoff, evaptrans, inf) = clamp(runoff, evaptrans, inf, precip)
-        return {
-            'runoff-vol': cell_count * runoff,
-            'et-vol': cell_count * evaptrans,
-            'inf-vol': cell_count * inf
-        }
-    elif bmp and bmp == 'rain_garden':
-        # Here, return a mixture of 20% ideal rain garden and 80%
-        # high-intensity residential.
-        inf = lookup_bmp_infiltration(soil_type, bmp)
-        runoff = max(0.0, precip - (evaptrans + inf))
-        hi_res_cell = soil_type + ':developed_med:'
-        hi_res = simulate_cell_day(precip, evaptrans, hi_res_cell, 1)
-        hir_run = hi_res['runoff-vol']
-        hir_et = hi_res['et-vol']
-        hir_inf = hi_res['inf-vol']
-        final_runoff = (0.2 * runoff + 0.8 * hir_run)
-        final_et = (0.2 * evaptrans + 0.8 * hir_et)
-        final_inf = (0.2 * inf + 0.8 * hir_inf)
-        final = clamp(final_runoff, final_et, final_inf, precip)
-        (final_runoff, final_et, final_inf) = final
-        return {
-            'runoff-vol': cell_count * final_runoff,
-            'et-vol': cell_count * final_et,
-            'inf-vol': cell_count * final_inf
-        }
-
-    # At this point, if the `bmp` string has non-zero length, it is
-    # equal to either 'no_till' or 'cluster_housing'.
-    if bmp and bmp != 'no_till' and bmp != 'cluster_housing':
+    # If the BMP is not an area based calculation or a built type bmp, there
+    # is an error.  Otherwise, it's a landuse
+    if (bmp and not is_area_bmp(bmp) and
+       bmp not in ['no_till', 'cluster_housing']):
         raise KeyError('Unexpected BMP: %s' % bmp)
-    land_use = bmp or land_use
+
+    land_use = land_use if not bmp or is_area_bmp(bmp) else bmp
 
     # When the land use is a built-type and the level of precipitation
     # is two inches or less, use the Pitt Small Storm Hydrology Model.
@@ -194,6 +188,13 @@ def simulate_cell_day(precip, evaptrans, cell, cell_count):
     inf = max(0.0, precip - (evaptrans + runoff))
 
     (runoff, evaptrans, inf) = clamp(runoff, evaptrans, inf, precip)
+
+    # If there are overall modifications that aren't calculated from
+    # the actual cell value, determine the amount to reduce runoff and
+    # increase infiltration
+    if overall_mods:
+        (runoff, inf) = calculate_overall_reduction(runoff, inf, overall_mods)
+
     return {
         'runoff-vol': cell_count * runoff,
         'et-vol': cell_count * evaptrans,
@@ -373,11 +374,16 @@ def simulate_modifications(census, fn, cell_res, precolumbian=False):
     }
 
 
-def simulate_day(census, precip, cell_res=10, precolumbian=False):
+def simulate_day(census, precip, overall_mods=None, cell_res=10,
+                 precolumbian=False):
     """
     Simulate a day, including water quality effects of modifications.
 
     `census` contains a distribution of cell-types in the area of interest.
+
+    `overall_mods` contains a dictionary of modification types and their
+     area size to reduce the overall r/et/inf values in a way unrelated
+     to the underlaying soil or land use type.
 
     `cell_res` is as described in `simulate_water_quality`.
 
@@ -399,7 +405,7 @@ def simulate_day(census, precip, cell_res=10, precolumbian=False):
         et = et_max * lookup_ki(bmp or land_use)
 
         # Simulate the cell for one day
-        return simulate_cell_day(precip, et, cell, cell_count)
+        return simulate_cell_day(precip, et, cell, cell_count, overall_mods)
 
     return simulate_modifications(census, fn, cell_res, precolumbian)
 
